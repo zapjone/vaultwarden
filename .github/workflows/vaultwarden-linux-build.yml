@@ -33,7 +33,9 @@ jobs:
           sudo apt-get install -y musl-tools pkg-config libssl-dev sqlite3 libsqlite3-dev jq curl git tar
 
       - name: 添加 musl target
-        run: rustup target add x86_64-unknown-linux-musl
+        run: |
+          source $HOME/.cargo/env
+          rustup target add x86_64-unknown-linux-musl
 
       - name: vaultwarden 版本选择
         id: get_tag
