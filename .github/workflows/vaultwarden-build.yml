@@ -58,11 +58,22 @@ jobs:
         shell: pwsh
         run: |
           $Release = Invoke-RestMethod -Uri "https://api.github.com/repos/dani-garcia/bw_web_builds/releases/latest"
-          $Asset = $Release.assets | Where-Object { $_.name -like "*.zip" }
+          $Asset = $Release.assets | Where-Object { $_.name -match "web.*\.tar\.gz" }
+
+          if (-not $Asset) {
+            Write-Error "No web-vault tar.gz asset found."
+            exit 1
+          }
+
           $DownloadUrl = $Asset.browser_download_url
           $FileName = $Asset.name
+
+          Write-Host "Downloading $FileName..."
           Invoke-WebRequest -Uri $DownloadUrl -OutFile $FileName
-          Expand-Archive -Path $FileName -DestinationPath web-vault
+
+          Write-Host "Extracting..."
+          tar -xf $FileName
+          move bw_web* vaultwarden\web-vault
 
       - name: 安装 vcpkg
         run: |
@@ -89,4 +100,4 @@ jobs:
           name: Vaultwarden_${{ steps.get_tag.outputs.tag }}
           path: |
             vaultwarden_${{ steps.get_tag.outputs.tag }}.exe
-            web-vault
+            vaultwarden\web-vault
