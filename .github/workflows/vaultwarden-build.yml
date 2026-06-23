@@ -58,7 +58,7 @@ jobs:
         shell: pwsh
         run: |
           $Release = Invoke-RestMethod -Uri "https://api.github.com/repos/dani-garcia/bw_web_builds/releases/latest"
-          $Asset = $Release.assets | Where-Object { $_.name -match "web.*\.tar\.gz" }
+          $Asset = $Release.assets | Where-Object { $_.name -match "web.*\.tar\.gz$" } | Select-Object -First 1
 
           if (-not $Asset) {
             Write-Error "No web-vault tar.gz asset found."
@@ -74,6 +74,7 @@ jobs:
           Write-Host "Extracting..."
           tar -xf $FileName
           move bw_web* vaultwarden\web-vault
+
 
       - name: 安装 vcpkg
         run: |
