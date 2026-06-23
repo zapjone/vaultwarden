@@ -39,6 +39,7 @@ jobs:
         run: |
           source $HOME/.cargo/env
           rustup target add x86_64-unknown-linux-musl
+          rustup component add rust-std --target x86_64-unknown-linux-musl
           rustup show
 
       - name: vaultwarden 版本选择
