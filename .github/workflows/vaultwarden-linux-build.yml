@@ -27,6 +27,11 @@ jobs:
           toolchain: stable
           default: true
 
+      - name: 安装依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools pkg-config libssl-dev sqlite3 libsqlite3-dev jq curl git tar
+
       - name: 添加 musl target
         run: rustup target add x86_64-unknown-linux-musl
 
@@ -74,11 +79,6 @@ jobs:
           if [ -n "$dir" ]; then
             mv "$dir" vaultwarden/web-vault
           fi
-
-      - name: 安装依赖
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y musl-tools pkg-config libssl-dev sqlite3 libsqlite3-dev
 
       - name: 编译 vaultwarden (musl 静态)
         run: cargo build --release --target x86_64-unknown-linux-musl
