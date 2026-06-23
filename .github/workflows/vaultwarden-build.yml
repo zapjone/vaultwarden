@@ -27,23 +27,27 @@ jobs:
           toolchain: stable
           default: true
 
-      - name: 检查工具版本
-        run: git version && cargo --version
-
       - name: vaultwarden 版本选择
         id: get_tag
         shell: pwsh
         run: |
           if ("${{ github.event.inputs.tag_choice }}" -eq "release") {
             $release = Invoke-RestMethod -Uri "https://api.github.com/repos/dani-garcia/vaultwarden/releases/latest"
-            echo "Using release tag: $($release.tag_name)"
             echo "tag=$($release.tag_name)" >> $env:GITHUB_OUTPUT
           } elseif ("${{ github.event.inputs.tag_choice }}" -eq "latest") {
-            echo "Using latest commit"
-            echo "tag=" >> $env:GITHUB_OUTPUT
+            echo "tag=latest" >> $env:GITHUB_OUTPUT
           } elseif ("${{ github.event.inputs.tag_choice }}" -eq "custom") {
-            echo "Using custom tag: ${{ github.event.inputs.tag }}"
             echo "tag=${{ github.event.inputs.tag }}" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: 设置版本号兜底
+        id: set_version
+        shell: pwsh
+        run: |
+          if ("${{ steps.get_tag.outputs.tag }}" -eq "") {
+            echo "version=latest" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "version=${{ steps.get_tag.outputs.tag }}" >> $env:GITHUB_OUTPUT
           }
 
       - name: 克隆 vaultwarden 仓库
@@ -54,7 +58,7 @@ jobs:
         run: git checkout ${{ steps.get_tag.outputs.tag }}
         working-directory: vaultwarden
 
-      - name: 下载 web-vault
+      - name: 下载并解压 web-vault
         shell: pwsh
         run: |
           $Release = Invoke-RestMethod -Uri "https://api.github.com/repos/dani-garcia/bw_web_builds/releases/latest"
@@ -72,9 +76,12 @@ jobs:
           Invoke-WebRequest -Uri $DownloadUrl -OutFile $FileName
 
           Write-Host "Extracting..."
-          tar -xf $FileName
-          move bw_web* vaultwarden\web-vault
-
+          tar -xzf $FileName -C vaultwarden
+          # 把解压出来的 bw_web_xxx 重命名为 web-vault
+          $dir = Get-ChildItem vaultwarden | Where-Object { $_.Name -like "bw_web*" }
+          if ($dir) {
+            Rename-Item -Path $dir.FullName -NewName "web-vault"
+          }
 
       - name: 安装 vcpkg
         run: |
@@ -93,12 +100,12 @@ jobs:
           RUSTFLAGS: "-Ctarget-feature=+crt-static"
 
       - name: 重命名文件带版本号
-        run: move .\vaultwarden\target\release\vaultwarden.exe .\vaultwarden_${{ steps.get_tag.outputs.tag }}.exe
+        run: move .\vaultwarden\target\release\vaultwarden.exe .\vaultwarden_${{ steps.set_version.outputs.version }}.exe
 
       - name: 打包文件
         uses: actions/upload-artifact@v4
         with:
-          name: Vaultwarden_${{ steps.get_tag.outputs.tag }}
+          name: Vaultwarden_${{ steps.set_version.outputs.version }}
           path: |
-            vaultwarden_${{ steps.get_tag.outputs.tag }}.exe
+            vaultwarden_${{ steps.set_version.outputs.version }}.exe
             vaultwarden\web-vault
