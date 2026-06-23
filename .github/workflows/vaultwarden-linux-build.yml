@@ -81,7 +81,9 @@ jobs:
           fi
 
       - name: 编译 vaultwarden (musl 静态)
-        run: cargo build --release --target x86_64-unknown-linux-musl
+        run: |
+          source $HOME/.cargo/env
+          cargo build --release --target x86_64-unknown-linux-musl
         working-directory: vaultwarden
 
       - name: 重命名文件带版本号
