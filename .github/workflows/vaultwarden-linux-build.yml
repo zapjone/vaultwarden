@@ -19,6 +19,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      RUSTUP_HOME: $HOME/.rustup
+      CARGO_HOME: $HOME/.cargo
 
     steps:
       - name: 安装 Rust
