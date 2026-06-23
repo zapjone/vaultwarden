@@ -102,10 +102,14 @@ jobs:
       - name: 重命名文件带版本号
         run: move .\vaultwarden\target\release\vaultwarden.exe .\vaultwarden_${{ steps.set_version.outputs.version }}.exe
 
+      - name: 调整 web-vault 目录
+        run: |
+          move vaultwarden\web-vault .\web-vault
+
       - name: 打包文件
         uses: actions/upload-artifact@v4
         with:
           name: Vaultwarden_${{ steps.set_version.outputs.version }}
           path: |
             vaultwarden_${{ steps.set_version.outputs.version }}.exe
-            vaultwarden\web-vault
+            web-vault
